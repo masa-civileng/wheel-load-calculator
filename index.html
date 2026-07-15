@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#155eef">
+  <meta name="description" content="小型輪荷重走行試験機の停止日時と走行回数を相互計算します。">
+  <title>輪荷重試験機 稼働計算</title>
+  <style>
+    :root{--bg:#f4f7fb;--card:#fff;--text:#172033;--muted:#667085;--line:#d8e0ed;--blue:#155eef;--blue2:#004eeb;--red:#b42318;--r:18px}
+    *{box-sizing:border-box}html{-webkit-text-size-adjust:100%}body{margin:0;min-height:100vh;background:radial-gradient(circle at 100% 0,rgba(21,94,239,.14),transparent 28rem),var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",Meiryo,sans-serif;line-height:1.55}
+    button,input{font:inherit}button{cursor:pointer;-webkit-tap-highlight-color:transparent}.wrap{width:min(100%,720px);margin:auto;padding:max(22px,env(safe-area-inset-top)) 15px max(32px,env(safe-area-inset-bottom))}
+    header{padding:4px 4px 14px}.tag{margin:0 0 7px;color:var(--blue);font-size:.82rem;font-weight:800}.tag:before{content:"";display:inline-block;width:9px;height:9px;margin-right:9px;border-radius:50%;background:var(--blue);box-shadow:0 0 0 5px rgba(21,94,239,.12)}h1{margin:0;font-size:clamp(1.65rem,7vw,2.4rem);line-height:1.24;letter-spacing:-.03em}.lead{margin:9px 0 0;color:var(--muted);font-size:.92rem}
+    .card{margin-top:14px;padding:18px;background:rgba(255,255,255,.97);border:1px solid var(--line);border-radius:var(--r);box-shadow:0 12px 34px rgba(16,24,40,.07)}h2{margin:0 0 13px;font-size:1.05rem}.grid{display:grid;gap:14px}.field label{display:block;margin-bottom:6px;font-size:.9rem;font-weight:750}.row{display:grid;grid-template-columns:1fr auto;gap:8px}input{width:100%;min-height:53px;padding:11px 13px;border:1.5px solid var(--line);border-radius:13px;background:#fff;color:var(--text);font-size:16px;outline:none}input:focus{border-color:var(--blue);box-shadow:0 0 0 4px rgba(21,94,239,.12)}.unit{display:grid;place-items:center;min-width:64px;padding:0 10px;border-radius:13px;background:#eef4ff;color:var(--blue);font-weight:800}.hint{display:block;margin-top:6px;color:var(--muted);font-size:.76rem}
+    .chips{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap}.chip{min-height:41px;padding:0 13px;border:0;border-radius:11px;background:#eef2f7;color:#344054;font-weight:750}
+    .tabs{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:16px;padding:5px;border-radius:14px;background:#e8edf5}.tab{min-height:49px;padding:8px;border:0;border-radius:10px;background:transparent;color:#475467;font-size:.88rem;font-weight:800}.tab.active{background:#fff;color:var(--blue);box-shadow:0 2px 9px rgba(16,24,40,.08)}[hidden]{display:none!important}
+    .result{margin-top:15px;padding:17px;border:1px solid #b2ccff;border-radius:15px;background:linear-gradient(135deg,#edf4ff,#fafcff)}.result small{display:block;color:#344054;font-weight:800}.main-result{margin:4px 0 0;color:var(--blue2);font-size:clamp(1.3rem,6vw,1.9rem);font-weight:850;line-height:1.4}.sub-result{margin:7px 0 0;color:#475467;font-size:.84rem}.error{margin:11px 0 0;color:var(--red);font-size:.84rem;font-weight:750}.actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:13px}.primary,.secondary{min-height:47px;border-radius:12px;font-weight:800}.primary{border:0;background:var(--blue);color:#fff}.secondary{border:1px solid var(--line);background:#fff;color:#344054}.notice{margin-top:14px;padding:12px;border-radius:13px;background:#fffaeb;color:#7a2e0e;font-size:.79rem}footer{padding:21px 5px 0;text-align:center;color:var(--muted);font-size:.73rem}.toast{position:fixed;left:50%;bottom:max(20px,env(safe-area-inset-bottom));transform:translate(-50%,20px);padding:10px 16px;border-radius:999px;background:#101828;color:#fff;font-size:.82rem;font-weight:750;opacity:0;pointer-events:none;transition:.2s}.toast.show{opacity:1;transform:translate(-50%,0)}
+    @media(min-width:620px){.wrap{padding-left:24px;padding-right:24px}.card{padding:23px}.grid.two{grid-template-columns:1fr 1fr}}
+  </style>
+</head>
+<body>
+<main class="wrap">
+  <header><p class="tag">スマホ対応・端末内で計算</p><h1>小型輪荷重走行試験機<br>稼働計算</h1><p class="lead">開始日時を基準に、走行回数から停止日時を計算。停止日時から走行回数を逆算することもできます。</p></header>
+
+  <section class="card">
+    <h2>共通設定</h2>
+    <div class="grid two">
+      <div class="field"><label for="start">開始日時</label><input id="start" type="datetime-local" step="60" value="2026-07-16T09:30"><div class="chips"><button id="now" class="chip" type="button">現在日時</button><button id="example" class="chip" type="button">例：7/16 9:30</button></div></div>
+      <div class="field"><label for="rate">1時間当たりの走行回数</label><div class="row"><input id="rate" type="number" inputmode="decimal" min="0.000001" step="1" value="3015"><span class="unit">回/時</span></div><span class="hint">初期値：3,015回/時</span></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="tabs" role="tablist"><button id="tabCount" class="tab active" type="button">回数 → 停止日時</button><button id="tabStop" class="tab" type="button">停止日時 → 回数</button></div>
+
+    <div id="panelCount">
+      <div class="field"><label for="count">設定する走行回数</label><div class="row"><input id="count" type="number" inputmode="numeric" min="0" step="1" value="100000"><span class="unit">回</span></div></div>
+      <p id="errCount" class="error" hidden></p>
+      <div class="result" aria-live="polite"><small>停止日時</small><p id="stopResult" class="main-result">—</p><p id="durationResult" class="sub-result"></p></div>
+      <div class="actions"><button id="copyCount" class="primary" type="button">結果をコピー</button><button id="resetCount" class="secondary" type="button">100,000回に戻す</button></div>
+    </div>
+
+    <div id="panelStop" hidden>
+      <div class="field"><label for="stop">設定する停止日時</label><input id="stop" type="datetime-local" step="60" value="2026-07-17T09:30"></div>
+      <p id="errStop" class="error" hidden></p>
+      <div class="result" aria-live="polite"><small>完了できる走行回数</small><p id="countResult" class="main-result">—</p><p id="elapsedResult" class="sub-result"></p></div>
+      <div class="actions"><button id="copyStop" class="primary" type="button">結果をコピー</button><button id="plusDay" class="secondary" type="button">開始＋24時間</button></div>
+    </div>
+
+    <div class="notice"><strong>計算条件：</strong>24時間連続稼働・途中停止なし。停止日時からの逆算は、その時刻までに完了できる整数回数を切り捨てて表示します。</div>
+  </section>
+  <footer>入力内容はこの端末のブラウザ内に保存され、外部には送信されません。</footer>
+</main>
+<div id="toast" class="toast">コピーしました</div>
+<script>
+(()=>{
+ const $=id=>document.getElementById(id),H=3600000,K='wheel-load-calculator-v1';
+ const el={start:$('start'),rate:$('rate'),count:$('count'),stop:$('stop'),tabCount:$('tabCount'),tabStop:$('tabStop'),panelCount:$('panelCount'),panelStop:$('panelStop'),errCount:$('errCount'),errStop:$('errStop'),stopResult:$('stopResult'),durationResult:$('durationResult'),countResult:$('countResult'),elapsedResult:$('elapsedResult'),toast:$('toast')};
+ const pad=n=>String(n).padStart(2,'0');
+ function parse(v){if(!v)return null;const m=v.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);if(!m)return null;const d=new Date(+m[1],+m[2]-1,+m[3],+m[4],+m[5]);return isNaN(d)?null:d}
+ function inputValue(d){return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`}
+ function fmt(d){return new Intl.DateTimeFormat('ja-JP',{year:'numeric',month:'2-digit',day:'2-digit',weekday:'short',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(d)}
+ function duration(sec){sec=Math.max(0,Math.round(sec));const d=Math.floor(sec/86400),h=Math.floor(sec%86400/3600),m=Math.floor(sec%3600/60),s=sec%60,a=[];if(d)a.push(`${d}日`);if(h||d)a.push(`${h}時間`);if(m||h||d)a.push(`${m}分`);a.push(`${s}秒`);return a.join(' ')}
+ function error(node,msg){node.textContent=msg;node.hidden=!msg}
+ function calcCount(){const st=parse(el.start.value),r=+el.rate.value,c=+el.count.value;let e='';if(!st)e='開始日時を入力してください。';else if(!(r>0))e='1時間当たりの走行回数は0より大きくしてください。';else if(!(c>=0))e='走行回数は0以上にしてください。';error(el.errCount,e);if(e){el.stopResult.textContent='—';el.durationResult.textContent='入力内容を確認してください。';return null}const hours=c/r,end=new Date(st.getTime()+hours*H),du=duration(hours*3600);el.stopResult.textContent=fmt(end);el.durationResult.textContent=`必要時間：${du}（${hours.toLocaleString('ja-JP',{maximumFractionDigits:6})}時間）`;return `小型輪荷重走行試験機 稼働計算\n開始日時：${fmt(st)}\n走行速度：${r.toLocaleString('ja-JP')}回/時\n走行回数：${c.toLocaleString('ja-JP')}回\n停止日時：${fmt(end)}\n必要時間：${du}`}
+ function calcStop(){const st=parse(el.start.value),sp=parse(el.stop.value),r=+el.rate.value;let e='';if(!st)e='開始日時を入力してください。';else if(!sp)e='停止日時を入力してください。';else if(!(r>0))e='1時間当たりの走行回数は0より大きくしてください。';else if(sp<st)e='停止日時は開始日時以降にしてください。';error(el.errStop,e);if(e){el.countResult.textContent='—';el.elapsedResult.textContent='入力内容を確認してください。';return null}const ms=sp-st,exact=ms/H*r,n=Math.floor(exact+1e-9),du=duration(ms/1000);el.countResult.textContent=`${n.toLocaleString('ja-JP')} 回`;el.elapsedResult.textContent=`経過時間：${du}（理論値 ${exact.toLocaleString('ja-JP',{maximumFractionDigits:3})}回）`;return `小型輪荷重走行試験機 稼働計算\n開始日時：${fmt(st)}\n停止日時：${fmt(sp)}\n走行速度：${r.toLocaleString('ja-JP')}回/時\n完了走行回数：${n.toLocaleString('ja-JP')}回\n経過時間：${du}`}
+ function save(){localStorage.setItem(K,JSON.stringify({start:el.start.value,rate:el.rate.value,count:el.count.value,stop:el.stop.value,mode:el.panelStop.hidden?'count':'stop'}))}
+ function recalc(){calcCount();calcStop();save()}
+ function mode(m){const c=m==='count';el.panelCount.hidden=!c;el.panelStop.hidden=c;el.tabCount.classList.toggle('active',c);el.tabStop.classList.toggle('active',!c);save()}
+ function toast(){el.toast.classList.add('show');setTimeout(()=>el.toast.classList.remove('show'),1600)}
+ async function copy(t){if(!t)return;try{await navigator.clipboard.writeText(t)}catch{const x=document.createElement('textarea');x.value=t;document.body.append(x);x.select();document.execCommand('copy');x.remove()}toast()}
+ try{const s=JSON.parse(localStorage.getItem(K));if(s){if(s.start)el.start.value=s.start;if(s.rate)el.rate.value=s.rate;if(s.count!==undefined)el.count.value=s.count;if(s.stop)el.stop.value=s.stop;mode(s.mode)}}catch{}
+ [el.start,el.rate,el.count,el.stop].forEach(x=>{x.addEventListener('input',recalc);x.addEventListener('change',recalc)});
+ el.tabCount.onclick=()=>mode('count');el.tabStop.onclick=()=>mode('stop');
+ $('now').onclick=()=>{const d=new Date();d.setSeconds(0,0);el.start.value=inputValue(d);recalc()};
+ $('example').onclick=()=>{el.start.value='2026-07-16T09:30';recalc()};
+ $('resetCount').onclick=()=>{el.count.value=100000;recalc()};
+ $('plusDay').onclick=()=>{const st=parse(el.start.value)||new Date();el.stop.value=inputValue(new Date(st.getTime()+24*H));recalc()};
+ $('copyCount').onclick=()=>copy(calcCount());$('copyStop').onclick=()=>copy(calcStop());recalc();
+})();
+</script>
+</body>
+</html>
